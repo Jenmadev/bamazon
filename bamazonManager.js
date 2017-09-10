@@ -22,17 +22,22 @@ var connection = mysql.createConnection({
           }])
           
             .then(function (answers) {
-                if(answers.menu === "View Products for Sale"){
-                    products();
-                }
-                else if(answers.menu === "View Low Inventory"){
-                    lowInventory();
-                }
-                else if(answers.menu === "Add to Inventory"){
-                    updateInventory();
-                }
-                else if(answers.menu === "Add New Product"){
-                    newProduct();
+                switch (answers.menu)
+                {
+                    case "View Products for Sale":
+                        products();
+                        break;
+                    case "View Low Inventory":
+                        lowInventory();
+                        break;
+                    case "Add to Inventory":
+                        updateInventory();
+                        break;
+                    case "Add New Product":
+                        newProduct();
+                        break;
+                    default:
+                        break;
                 }
             });
         }
@@ -41,9 +46,8 @@ var connection = mysql.createConnection({
 function products(){
     connection.query("SELECT * FROM products", function(err,results){
     for (var i = 0; i < results.length; i++){
-        console.log('Item ID: '+ results[i].item_id  +  '| Product Name: ' + results[i].product_name + '| Price: $' + results[i].price);
+        console.log('\nItem ID: '+ results[i].item_id  +  '| Product Name: ' + results[i].product_name + '| Price: $' + results[i].price);
         // console.log(results);
-        console.log(" ");
     }
     start();
 })
@@ -53,9 +57,10 @@ function products(){
 function lowInventory(){
     connection.query("SELECT * FROM products WHERE stock_quantity<=5", function(err,results){
     for (var i = 0; i < results.length; i++){
-        console.log('Item ID: '+ results[i].item_id  +  '| Product Name: ' + results[i].product_name + '| Price: $' + results[i].price + '| Inventory: ' + results[i].stock_quantity);
+        console.log('\nItem ID: '+ results[i].item_id  +  '| Product Name: ' + results[i].product_name + '| Price: $' + results[i].price + '| Inventory: ' + results[i].stock_quantity);
         // console.log(results);
     }
+    start();
 })
 }
 
@@ -63,9 +68,10 @@ function lowInventory(){
 function updateInventory(){
     connection.query("SELECT * FROM products", function(err,results){
         for (var i = 0; i < results.length; i++){
-            console.log('Item ID: '+ results[i].item_id  +  '| Product Name: ' + results[i].product_name + '| Price: $' + results[i].price+ '| Inventory: ' + results[i].stock_quantity);
+            console.log('\nItem ID: '+ results[i].item_id  +  '| Product Name: ' + results[i].product_name + '| Price: $' + results[i].price+ '| Inventory: ' + results[i].stock_quantity);
             // console.log(results);
         }
+       
     })
     inquirer.prompt([{
         name: "productOption",
@@ -80,15 +86,20 @@ function updateInventory(){
       
         .then(function (answers) {
             connection.query("SELECT * FROM products WHERE item_id =" + answers.productOption, function(err,results){
-                console.log(results);
-                // console.log(parseInt(results[0].stock_quantity) + parseInt(answers.quantityUpdate));
-            connection.query("UPDATE products SET stock_quantity =" + (parseInt(results[0].stock_quantity) + parseInt(answers.quantityUpdate)) + " WHERE item_id =" + answers.productOption, function(err,results){
+                // console.log(results);
+              
+                var newQty = (parseInt(results[0].stock_quantity) + parseInt(answers.quantityUpdate));
+            connection.query("UPDATE products SET stock_quantity =" + newQty + " WHERE item_id =" + answers.productOption, function(err,results){
                 if (err){
                     throw err
                 }
-                else{console.log(results);
+                else{
+                    connection.query("SELECT * FROM products WHERE item_id =" + answers.productOption, function(err,results){
+                        console.log("\nThe stock is now " +results[0].stock_quantity);
+                        start();
+                    });   
+                    
                 }
-                
             })
         })
     });
@@ -124,7 +135,8 @@ function newProduct(){
                 price:answers.newPrice,
                 stock_quantity:answers.newQuantity
             });
-            console.log("The item has been added!")
+            products();
+            start();
     });
 
 }
